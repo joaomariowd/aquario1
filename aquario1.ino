@@ -38,9 +38,9 @@ bool time = true;
 char timeBuffer[12];
 
 // Feeder
-int feedMorningHour = 10;
+int feedMorningHour = 7;
 int feedMorningMinute = 0;
-int feedNightHour = 22;
+int feedNightHour = 19;
 int feedNightMinute = 0;
 
 int feedAngle = 170;
@@ -186,8 +186,8 @@ void feedFish()
 {
   foodServo.attach(servoPin);
   // shake
-  cycleServo(80, 40, 50, 0);
-  cycleServo(80, 40, 50, 0);
+  cycleServo(80, 40, 50, 100);
+  cycleServo(80, 40, 50, 100);
   delay(100);
   // feed
   cycleServo(feedAngle, 10, 25, 0);
