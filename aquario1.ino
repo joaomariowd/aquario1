@@ -1,39 +1,38 @@
-// Inclui as bibliotecas
+// Bibliotecas
 #include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "RTClib.h"
 #include <Servo.h>
 
-// Clock
+// Inicializações
 RTC_DS1307 rtc;
-
-// Food servo
 Servo foodServo;
+
+// Pin inititalization
+int heaterRelayPin = 10;
 int servoPin = 11;
-bool feed = true;
+int temperatureSensorPin = 12;
+int temperatureMonitorLedPin = LED_BUILTIN;
 
 // Temperature sensor
-int temperatureSensorPin = 12;
 OneWire oneWire(temperatureSensorPin);
 DallasTemperature tempSensor(&oneWire);
 DeviceAddress temperatureSensorAddress;
+
+// ** Variables **
+// Heater
+int temperatureMonitorLedState = LOW;
 float temperature = 0;
 int tempError = 0;
-// Temperature Monitor
-int temperatureMonitorLedPin = LED_BUILTIN;
-int temperatureMonitorLedState = LOW;
-unsigned long previousMillis = 0;
-int interval = 1000;
-
-// Heater
-int heaterRelayPin = 10;
 bool keepHeaterOn = false;
 int minTemperature = 25;
 int maxTemperature = 27.5;
 
 // Time
-bool adjustTime = false;
+unsigned long previousMillis = 0;
+int interval = 1000;
+bool adjustTime = false; // adjust time
 bool time = true;
 char timeBuffer[12];
 
@@ -42,8 +41,9 @@ int feedMorningHour = 7;
 int feedMorningMinute = 0;
 int feedNightHour = 19;
 int feedNightMinute = 0;
-
-int feedAngle = 170;
+int feedAngle = 180;
+int feedInterval = 300;
+bool feed = true;
 
 void setup()
 {
@@ -190,8 +190,8 @@ void feedFish()
   cycleServo(80, 40, 50, 100);
   delay(100);
   // feed
-  cycleServo(feedAngle, 10, 25, 0);
-  delay(200);
+  cycleServo(feedAngle, 10, 40, feedInterval);
+  delay(500);
   foodServo.detach();
 }
 
