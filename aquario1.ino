@@ -90,7 +90,7 @@ void loop()
   DateTime currentTime = rtc.now();
 
   checkTemperature(currentTime);
-  checkFeedSchedule(currentTime.hour(), currentTime.minute());
+  checkFeedSchedule(currentTime);
 }
 
 void blinkLed(int temperatureLedInterval)
@@ -111,16 +111,17 @@ void blinkLed(int temperatureLedInterval)
   }
 }
 
-void checkFeedSchedule(int currentMinute, int currentHour) {
-  if(bFishFed == false && currentMinute == feedMinute) {
+void checkFeedSchedule(DateTime currentTime) {
+  if(bFishFed == false && currentTime.minute() == feedMinute) {
     for (int i = 0; i < feedTimes; i++) {
-      if (currentHour == feedSchedule[i]) {
+      if (currentTime.hour() == feedSchedule[i]) {
         feedFish();
+        if (bSerialAvailable) Serial.println("Fish Fed!!!");
         bFishFed = true;
       }
     }
   }
-  if (bFishFed == true && currentMinute == fedBoolAdjustMinute) {
+  if (bFishFed == true && currentTime.minute() == fedBoolAdjustMinute) {
     bFishFed = false;
   }
 }
