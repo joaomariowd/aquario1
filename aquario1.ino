@@ -209,7 +209,6 @@ void printTimeAndTemperature(DateTime currentTime)
 
 void readTemperature()
 {
-  tempSensor.requestTemperatures();
   if (!tempSensor.getAddress(temperatureSensorAddress, 0))
   {
     if (bSerialAvailable) Serial.println("Sensor de Temperatura falhou");
@@ -218,6 +217,7 @@ void readTemperature()
   }
 
   temperatureSensorErrors = 0;
+  tempSensor.requestTemperatures();
   temperature = tempSensor.getTempC(temperatureSensorAddress);
 }
 
