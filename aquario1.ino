@@ -13,37 +13,38 @@ Servo foodServo;
 int heaterRelayPin = 10;
 int servoPin = 11;
 int temperatureSensorPin = 12;
-int temperatureMonitorLedPin = LED_BUILTIN;
+int temperatureLedPin = LED_BUILTIN;
 
 // Temperature sensor
 OneWire oneWire(temperatureSensorPin);
 DallasTemperature tempSensor(&oneWire);
 DeviceAddress temperatureSensorAddress;
+int temperatureSensorErrors = 0;
 
 // ** Variables **
+bool bSerialAvailable = false; // Connected to a device
+
 // Heater
-int temperatureMonitorLedState = LOW;
+int minTemperature = 25; // Min Temperature
+int maxTemperature = 27.5; // Max Temperature
 float temperature = 0;
-int tempError = 0;
-bool keepHeaterOn = false;
-int minTemperature = 25;
-int maxTemperature = 27.5;
+bool bCheckTemperature = true;
+bool bKeepHeaterOn = false;
+int temperatureLedState = LOW;
+int temperatureLedInterval = 1000;
 
 // Time
-unsigned long previousMillis = 0;
-int interval = 1000;
-bool adjustTime = false; // adjust time
-bool time = true;
+unsigned long ulPreviousLedMillis = 0;
 char timeBuffer[12];
 
 // Feeder
-int feedMorningHour = 7;
-int feedMorningMinute = 0;
-int feedNightHour = 19;
-int feedNightMinute = 0;
 int feedAngle = 180;
 int feedInterval = 300;
-bool feed = true;
+int feedSchedule[] = {7, 13, 19}; // Feed Schedule
+int feedTimes = 3; // Feed Times
+int feedMinute = 0;
+bool bFishFed = false;
+int fedBoolAdjustMinute = feedMinute + 1;
 
 void setup()
 {
@@ -58,141 +59,84 @@ void setup()
   else
   {
     pinMode(heaterRelayPin, OUTPUT);
-    pinMode(temperatureMonitorLedPin, OUTPUT);
+    pinMode(temperatureLedPin, OUTPUT);
 
     foodServo.attach(servoPin);
-    foodServo.write(5);
+    foodServo.write(0);
     foodServo.detach();
 
     tempSensor.begin();
 
-    if (adjustTime == true)
+    // while(Serial.available() == 0 && millis() <= 8000);
+
+    if (bSerialAvailable)
     {
       Serial.println("Ajustando relógio");
       rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     }
 
     DateTime currentTime = rtc.now();
-    Serial.println("Relógio inicializado");
+    if(bSerialAvailable) Serial.println("Relógio inicializado");
 
-    setTemperature();
-    setKeepHeaterOn();
-    printTime(currentTime);
+    readTemperature();
+    printTimeAndTemperature(currentTime);
   }
 }
 
 void loop()
 {
-  // Hora e temperatura a cada 30s
+  printTemperature();
+
   DateTime currentTime = rtc.now();
 
-  if ((currentTime.second() == 0 || currentTime.second() == 30) && time)
-  {
-    setTemperature();
-    heaterRelay();
-    printTime(currentTime);
-    time = false;
-  }
-  if (currentTime.second() == 1 || currentTime.second() == 31)
-  {
-    time = true;
-  }
-  temperatureMonitor();
-
-  // Alimentação
-  if ((
-          (currentTime.hour() == feedMorningHour && currentTime.minute() == feedMorningMinute && currentTime.second() == 5) || (currentTime.hour() == feedNightHour && currentTime.minute() == feedNightMinute && currentTime.second() == 5)) &&
-      feed)
-  {
-    feed = false;
-    feedFish();
-  }
-  if ((
-          (currentTime.hour() == feedMorningHour && currentTime.minute() == feedMorningMinute && currentTime.second() == 6) || (currentTime.hour() == feedNightHour && currentTime.minute() == feedNightMinute && currentTime.second() == 6)))
-  {
-    feed = true;
-  }
+  checkTemperature(currentTime);
+  checkFeedSchedule(currentTime.hour(), currentTime.minute());
 }
 
-void printTime(DateTime currentTime)
+void blinkLed(int temperatureLedInterval)
 {
-  sprintf(timeBuffer, "%02d:%02d:%02d ", currentTime.hour(), currentTime.minute(), currentTime.second());
-  Serial.print("** ");
-  Serial.print(timeBuffer);
-  Serial.println();
-  Serial.println(String(temperature) + " graus");
-}
-
-void setTemperature()
-{
-  tempSensor.requestTemperatures();
-  if (!tempSensor.getAddress(temperatureSensorAddress, 0))
+  unsigned long currentMillis = millis();
+  if (currentMillis - ulPreviousLedMillis >= temperatureLedInterval)
   {
-    Serial.println("Sensor de Temperatura falhou");
-    tempError += 1;
-    return;
-  }
-
-  tempError = 0;
-  temperature = tempSensor.getTempC(temperatureSensorAddress);
-}
-
-void setKeepHeaterOn()
-{
-  if (tempError > 0)
-    keepHeaterOn = false;
-  else if (temperature < minTemperature)
-    keepHeaterOn = true;
-  else
-    keepHeaterOn = false;
-}
-
-void heaterRelay()
-{
-  if (tempError >= 10)
-  {
-    Serial.println("Relay Low");
-    digitalWrite(heaterRelayPin, LOW);
-    return;
-  }
-  if (temperature <= minTemperature)
-  {
-    Serial.println("Relay High");
-    digitalWrite(heaterRelayPin, HIGH);
-    keepHeaterOn = true;
-  }
-  else if (temperature > maxTemperature)
-  {
-    Serial.println("Relay Low");
-    digitalWrite(heaterRelayPin, LOW);
-    keepHeaterOn = false;
-  }
-  else
-  {
-    if (keepHeaterOn)
+    ulPreviousLedMillis = currentMillis;
+    if (temperatureLedState == LOW)
     {
-      Serial.println("Relay High");
-      digitalWrite(heaterRelayPin, HIGH);
+      temperatureLedState = HIGH;
     }
     else
     {
-      Serial.println("Relay Low");
-      digitalWrite(heaterRelayPin, LOW);
+      temperatureLedState = LOW;
     }
+    digitalWrite(temperatureLedPin, temperatureLedState);
   }
 }
 
-void feedFish()
-{
-  foodServo.attach(servoPin);
-  // shake
-  cycleServo(80, 40, 50, 100);
-  cycleServo(80, 40, 50, 100);
-  delay(100);
-  // feed
-  cycleServo(feedAngle, 10, 40, feedInterval);
-  delay(500);
-  foodServo.detach();
+void checkFeedSchedule(int currentMinute, int currentHour) {
+  if(bFishFed == false && currentMinute == feedMinute) {
+    for (int i = 0; i < feedTimes; i++) {
+      if (currentHour == feedSchedule[i]) {
+        feedFish();
+        bFishFed = true;
+      }
+    }
+  }
+  if (bFishFed == true && currentMinute == fedBoolAdjustMinute) {
+    bFishFed = false;
+  }
+}
+
+void checkTemperature(DateTime currentTime) {
+  if (bCheckTemperature && (currentTime.second() == 0 || currentTime.second() == 30))
+  {
+    readTemperature();
+    setHeaterRelay();
+    printTimeAndTemperature(currentTime);
+    bCheckTemperature = false;
+  }
+  if (bCheckTemperature == false && (currentTime.second() == 1 || currentTime.second() == 31))
+  {
+    bCheckTemperature = true;
+  }
 }
 
 void cycleServo(int angle, int step, int stepDelay, int betweenDelay)
@@ -210,10 +154,28 @@ void cycleServo(int angle, int step, int stepDelay, int betweenDelay)
   }
 }
 
-void temperatureMonitor()
+void feedFish()
+{
+  foodServo.attach(servoPin);
+  // shake
+  cycleServo(80, 40, 50, 100);
+  cycleServo(80, 40, 50, 100);
+  delay(100);
+  // feed
+  cycleServo(feedAngle, 10, 40, feedInterval);
+  delay(500);
+  foodServo.detach();
+}
+
+void hardwareError()
+{
+  temperatureLedState = LOW;
+}
+
+void printTemperature()
 {
   // Erro de leitura
-  if (tempError)
+  if (temperatureSensorErrors)
   {
     hardwareError();
   }
@@ -234,25 +196,62 @@ void temperatureMonitor()
   }
 }
 
-void blinkLed(int interval)
+void printTimeAndTemperature(DateTime currentTime)
 {
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval)
+  if (bSerialAvailable == false) return;
+  sprintf(timeBuffer, "%02d:%02d:%02d ", currentTime.hour(), currentTime.minute(), currentTime.second());
+  Serial.print("** ");
+  Serial.print(timeBuffer);
+  Serial.println();
+  Serial.println(String(temperature) + " graus");
+}
+
+void readTemperature()
+{
+  tempSensor.requestTemperatures();
+  if (!tempSensor.getAddress(temperatureSensorAddress, 0))
   {
-    previousMillis = currentMillis;
-    if (temperatureMonitorLedState == LOW)
+    if (bSerialAvailable) Serial.println("Sensor de Temperatura falhou");
+    temperatureSensorErrors += 1;
+    return;
+  }
+
+  temperatureSensorErrors = 0;
+  temperature = tempSensor.getTempC(temperatureSensorAddress);
+}
+
+void setHeaterRelay()
+{
+  if (temperatureSensorErrors >= 10)
+  {
+    if (bSerialAvailable) Serial.println("Relay Low");
+    digitalWrite(heaterRelayPin, LOW);
+    bKeepHeaterOn = false;
+    return;
+  }
+  if (temperature <= minTemperature)
+  {
+    if (bSerialAvailable) Serial.println("Relay High");
+    digitalWrite(heaterRelayPin, HIGH);
+    bKeepHeaterOn = true;
+  }
+  else if (temperature > maxTemperature)
+  {
+    if (bSerialAvailable) Serial.println("Relay Low");
+    digitalWrite(heaterRelayPin, LOW);
+    bKeepHeaterOn = false;
+  }
+  else
+  {
+    if (bKeepHeaterOn)
     {
-      temperatureMonitorLedState = HIGH;
+      if (bSerialAvailable) Serial.println("Relay High");
+      digitalWrite(heaterRelayPin, HIGH);
     }
     else
     {
-      temperatureMonitorLedState = LOW;
+      if (bSerialAvailable) Serial.println("Relay Low");
+      digitalWrite(heaterRelayPin, LOW);
     }
-    digitalWrite(temperatureMonitorLedPin, temperatureMonitorLedState);
   }
-}
-
-void hardwareError()
-{
-  temperatureMonitorLedState = LOW;
 }
