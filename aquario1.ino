@@ -22,7 +22,7 @@ DeviceAddress temperatureSensorAddress;
 int temperatureSensorErrors = 0;
 
 // ** Variables **
-bool bSerialAvailable = false; // Connected to a device
+bool bSerialAvailable = true; // Connected to a device
 
 // Heater
 int minTemperature = 25; // Min Temperature
@@ -38,10 +38,10 @@ unsigned long ulPreviousLedMillis = 0;
 char timeBuffer[12];
 
 // Feeder
-int feedAngle = 180;
+int feedAngle = 100;
 int feedInterval = 100;
-int feedSchedule[] = {7, 13, 19}; // Feed Schedule
-int feedTimes = 3; // Feed Times
+int feedSchedule[] = {7, 19}; // Feed Schedule
+int feedTimes = 2; // Feed Times
 int feedMinute = 0;
 bool bFishFed = false;
 int fedBoolAdjustMinute = feedMinute + 1;
