@@ -39,7 +39,7 @@ char timeBuffer[12];
 
 // Feeder
 int feedAngle = 180;
-int feedInterval = 100;
+int feedInterval = 200;
 int feedSchedule[] = {7, 19}; // Feed Schedule
 int feedTimes = 2; // Feed Times
 int feedMinute = 0;
