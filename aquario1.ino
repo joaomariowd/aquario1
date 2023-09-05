@@ -38,7 +38,7 @@ unsigned long ulPreviousLedMillis = 0;
 char timeBuffer[12];
 
 // Feeder
-int feedAngle = 150;
+int feedAngle = 180;
 int feedInterval = 100;
 int feedSchedule[] = {7, 19}; // Feed Schedule
 int feedTimes = 2; // Feed Times
