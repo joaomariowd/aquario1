@@ -25,8 +25,8 @@ int temperatureSensorErrors = 0;
 bool bSerialAvailable = false; // Connected to a device
 
 // Heater
-int minTemperature = 25; // Min Temperature
-int maxTemperature = 27.5; // Max Temperature
+int minTemperature = 21; // Min Temperature
+int maxTemperature = 25; // Max Temperature
 float temperature = 0;
 bool bCheckTemperature = true;
 bool bKeepHeaterOn = false;
@@ -39,9 +39,9 @@ char timeBuffer[12];
 
 // Feeder
 int feedAngle = 180;
-int feedInterval = 200;
-int feedSchedule[] = {7, 19}; // Feed Schedule
-int feedTimes = 2; // Feed Times
+int feedInterval = 500;
+int feedSchedule[] = {7, 12, 20}; // Feed Schedule
+int feedTimes = 3; // Feed Times
 int feedMinute = 0;
 bool bFishFed = false;
 int fedBoolAdjustMinute = feedMinute + 1;
