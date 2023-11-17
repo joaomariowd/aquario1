@@ -26,7 +26,7 @@ bool bSerialAvailable = false; // Connected to a device
 
 // Heater
 int minTemperature = 22; // Min Temperature
-int maxTemperature = 25; // Max Temperature
+int maxTemperature = 30; // Max Temperature
 float temperature = 0;
 bool bCheckTemperature = true;
 bool bKeepHeaterOn = false;
@@ -130,7 +130,7 @@ void checkTemperature(DateTime currentTime) {
   if (bCheckTemperature && (currentTime.second() == 0 || currentTime.second() == 30))
   {
     readTemperature();
-    setHeaterRelay();
+    // setHeaterRelay();
     printTimeAndTemperature(currentTime);
     bCheckTemperature = false;
   }
