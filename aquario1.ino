@@ -25,7 +25,7 @@ int temperatureSensorErrors = 0;
 bool bSerialAvailable = false; // Connected to a device
 
 // Heater
-int minTemperature = 22; // Min Temperature
+int minTemperature = 24; // Min Temperature
 int maxTemperature = 30; // Max Temperature
 float temperature = 0;
 bool bCheckTemperature = true;
