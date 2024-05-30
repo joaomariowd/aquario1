@@ -25,8 +25,8 @@ int temperatureSensorErrors = 0;
 bool bSerialAvailable = false; // Connected to a device
 
 // Heater
-int minTemperature = 24; // Min Temperature
-int maxTemperature = 30; // Max Temperature
+int minTemperature = 20; // Min Temperature
+int maxTemperature = 23; // Max Temperature
 float temperature = 0;
 bool bCheckTemperature = true;
 bool bKeepHeaterOn = false;
@@ -41,7 +41,7 @@ char timeBuffer[12];
 int feedAngle = 180;
 int feedInterval = 800;
 int feedSchedule[] = {7, 13, 20}; // Feed Schedule
-int feedTimes = 3; // Feed Times
+int feedTimes = 3;                // Feed Times
 int feedMinute = 0;
 bool bFishFed = false;
 int fedBoolAdjustMinute = feedMinute + 1;
@@ -76,7 +76,8 @@ void setup()
     }
 
     DateTime currentTime = rtc.now();
-    if(bSerialAvailable) Serial.println("Relógio inicializado");
+    if (bSerialAvailable)
+      Serial.println("Relógio inicializado");
 
     readTemperature();
     printTimeAndTemperature(currentTime);
@@ -111,26 +112,33 @@ void blinkLed(int temperatureLedInterval)
   }
 }
 
-void checkFeedSchedule(DateTime currentTime) {
-  if(bFishFed == false && currentTime.minute() == feedMinute) {
-    for (int i = 0; i < feedTimes; i++) {
-      if (currentTime.hour() == feedSchedule[i]) {
+void checkFeedSchedule(DateTime currentTime)
+{
+  if (bFishFed == false && currentTime.minute() == feedMinute)
+  {
+    for (int i = 0; i < feedTimes; i++)
+    {
+      if (currentTime.hour() == feedSchedule[i])
+      {
         feedFish();
-        if (bSerialAvailable) Serial.println("Fish Fed!!!");
+        if (bSerialAvailable)
+          Serial.println("Fish Fed!!!");
         bFishFed = true;
       }
     }
   }
-  if (bFishFed == true && currentTime.minute() == fedBoolAdjustMinute) {
+  if (bFishFed == true && currentTime.minute() == fedBoolAdjustMinute)
+  {
     bFishFed = false;
   }
 }
 
-void checkTemperature(DateTime currentTime) {
+void checkTemperature(DateTime currentTime)
+{
   if (bCheckTemperature && (currentTime.second() == 0 || currentTime.second() == 30))
   {
     readTemperature();
-    // setHeaterRelay();
+    setHeaterRelay();
     printTimeAndTemperature(currentTime);
     bCheckTemperature = false;
   }
@@ -199,7 +207,8 @@ void printTemperature()
 
 void printTimeAndTemperature(DateTime currentTime)
 {
-  if (bSerialAvailable == false) return;
+  if (bSerialAvailable == false)
+    return;
   sprintf(timeBuffer, "%02d:%02d:%02d ", currentTime.hour(), currentTime.minute(), currentTime.second());
   Serial.print("** ");
   Serial.print(timeBuffer);
@@ -211,7 +220,8 @@ void readTemperature()
 {
   if (!tempSensor.getAddress(temperatureSensorAddress, 0))
   {
-    if (bSerialAvailable) Serial.println("Sensor de Temperatura falhou");
+    if (bSerialAvailable)
+      Serial.println("Sensor de Temperatura falhou");
     temperatureSensorErrors += 1;
     return;
   }
@@ -225,20 +235,23 @@ void setHeaterRelay()
 {
   if (temperatureSensorErrors >= 10)
   {
-    if (bSerialAvailable) Serial.println("Relay Low");
+    if (bSerialAvailable)
+      Serial.println("Relay Low");
     digitalWrite(heaterRelayPin, LOW);
     bKeepHeaterOn = false;
     return;
   }
   if (temperature <= minTemperature)
   {
-    if (bSerialAvailable) Serial.println("Relay High");
+    if (bSerialAvailable)
+      Serial.println("Relay High");
     digitalWrite(heaterRelayPin, HIGH);
     bKeepHeaterOn = true;
   }
   else if (temperature > maxTemperature)
   {
-    if (bSerialAvailable) Serial.println("Relay Low");
+    if (bSerialAvailable)
+      Serial.println("Relay Low");
     digitalWrite(heaterRelayPin, LOW);
     bKeepHeaterOn = false;
   }
@@ -246,12 +259,14 @@ void setHeaterRelay()
   {
     if (bKeepHeaterOn)
     {
-      if (bSerialAvailable) Serial.println("Relay High");
+      if (bSerialAvailable)
+        Serial.println("Relay High");
       digitalWrite(heaterRelayPin, HIGH);
     }
     else
     {
-      if (bSerialAvailable) Serial.println("Relay Low");
+      if (bSerialAvailable)
+        Serial.println("Relay Low");
       digitalWrite(heaterRelayPin, LOW);
     }
   }
