@@ -198,7 +198,12 @@ void printTemperature()
   {
     blinkLed(1000);
   }
-  // Quente
+  // Good
+  else if (temperature <= 25)
+  {
+    blinkLed(2000);
+  }
+  // Hot
   else
   {
     blinkLed(5000);
